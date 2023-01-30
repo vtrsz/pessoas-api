@@ -23,7 +23,7 @@ public class CreatePersonDTO {
     private LocalDate birthDate;
 
     @NotNull(message = "address cannot be null")
-    private List<Address> address;
+    private List<AddressAttachedPersonDTO> address;
 
     public Person toEntity() {
         Person person = new Person();
