@@ -1,13 +1,14 @@
 package com.attornatus.attornatus.entity;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.attornatus.attornatus.dto.response.ResponseAddressAttachedPersonDTO;
+import com.attornatus.attornatus.dto.response.ResponsePersonDTO;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
 import lombok.*;
+import org.springframework.beans.BeanUtils;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Entity(name = "person")
 @Table(name = "person")
@@ -22,15 +23,24 @@ public class Person {
     private Long id;
 
     @Column(nullable = false)
-    @NotBlank(message = "name cannot be blank")
     private String name;
 
     @Column(nullable = false)
-    @NotBlank(message = "birthDate cannot be blank")
-    @JsonFormat(pattern = "dd/MM/yyyy")
     private LocalDate birthDate;
 
-    @JsonIgnore
-    @OneToMany(mappedBy = "person")
+    @OneToMany(mappedBy = "person", cascade = CascadeType.ALL)
     private List<Address> addresses;
+
+    public ResponsePersonDTO toDto() {
+        ResponsePersonDTO personDTO = new ResponsePersonDTO();
+        BeanUtils.copyProperties(this, personDTO);
+
+        List<ResponseAddressAttachedPersonDTO> addresses = this.getAddresses().stream()
+                .map(Address::toDto)
+                .collect(Collectors.toList());
+
+
+        personDTO.setAddresses(addresses);
+        return personDTO;
+    }
 }

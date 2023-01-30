@@ -1,7 +1,9 @@
 package com.attornatus.attornatus.entity;
 
+import com.attornatus.attornatus.dto.response.ResponseAddressAttachedPersonDTO;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.beans.BeanUtils;
 
 @Entity(name = "address")
 @Table(name = "address")
@@ -33,7 +35,13 @@ public class Address {
     @Column(nullable = false)
     private Boolean main;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "person_id_fk", referencedColumnName = "id")
     private Person person;
+
+    public ResponseAddressAttachedPersonDTO toDto() {
+        ResponseAddressAttachedPersonDTO address = new ResponseAddressAttachedPersonDTO();
+        BeanUtils.copyProperties(this, address);
+        return address;
+    }
 }

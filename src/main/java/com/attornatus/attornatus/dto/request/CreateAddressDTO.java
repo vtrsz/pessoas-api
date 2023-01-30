@@ -1,15 +1,17 @@
-package com.attornatus.attornatus.dto;
+package com.attornatus.attornatus.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 @Getter
 @Setter
 @AllArgsConstructor
-public class AddressAttachedPersonDTO {
+@ToString
+public class CreateAddressDTO {
     @NotBlank(message = "street cannot be blank")
     private String street;
 
@@ -27,4 +29,7 @@ public class AddressAttachedPersonDTO {
 
     @NotNull(message = "main cannot be null")
     private Boolean main;
+
+    @NotNull(message = "personId cannot be null")
+    private Long personId;
 }

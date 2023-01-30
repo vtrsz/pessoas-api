@@ -1,46 +1,46 @@
 package com.attornatus.attornatus.exception;
 
-import com.attornatus.attornatus.dto.ResponseDTO;
-import com.attornatus.attornatus.dto.ValidationErrorResponseDTO;
-import org.springframework.core.convert.ConversionFailedException;
+import org.springframework.context.support.DefaultMessageSourceResolvable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.validation.ObjectError;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.ResponseStatus;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
-    private static final int ERROR_POSITION = 0;
-
-    @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
-    @ExceptionHandler({BusinessRuleException.class})
-    public @ResponseBody ResponseDTO handleBusinessErrors(Exception e) {
-        return new ResponseDTO(e.getMessage());
+    @ExceptionHandler({BusinessRuleException.class,
+            MultipleMainAddressException.class
+    })
+    public @ResponseBody ResponseEntity<Map<String, List<String>>> handleBusinessErrors(Exception e) {
+        return new ResponseEntity<>(getErrorsMap(List.of(e.getMessage())), new HttpHeaders(), HttpStatus.UNPROCESSABLE_ENTITY);
     }
 
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public @ResponseBody ResponseEntity<Map<String, List<String>>> handleHttpMessageNotReadableError(Exception e) {
+        return new ResponseEntity<>(getErrorsMap(List.of(e.getMessage())), new HttpHeaders(), HttpStatus.BAD_REQUEST);
+    }
+
     @ExceptionHandler({MethodArgumentNotValidException.class})
-    public List<ValidationErrorResponseDTO> handleMethodArgumentNotValid(MethodArgumentNotValidException e) {
-        List<ValidationErrorResponseDTO> response = new ArrayList<>();
-
-        for (ObjectError error : e.getBindingResult().getAllErrors()) {
-            String errorAll = error.getCodes()[ERROR_POSITION];
-            String fieldName = errorAll.substring(errorAll.lastIndexOf(".") + 1);
-            response.add(new ValidationErrorResponseDTO(fieldName, error.getDefaultMessage()));
-        }
-
-        return response;
+    public ResponseEntity<Map<String, List<String>>> handleValidationErrors(
+            MethodArgumentNotValidException ex) {
+        List<String> errors = ex.getBindingResult().getFieldErrors().stream()
+                .map(DefaultMessageSourceResolvable::getDefaultMessage)
+                .collect(Collectors.toList());
+        return new ResponseEntity<>(getErrorsMap(errors), new HttpHeaders(), HttpStatus.BAD_REQUEST);
     }
 
-    @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
-    @ExceptionHandler(MultipleMainAddressException.class)
-    public @ResponseBody ResponseDTO handleMultipleMainAddress(Exception e) {
-        return new ResponseDTO(e.getMessage());
+    private Map<String, List<String>> getErrorsMap(List<String> errors) {
+        Map<String, List<String>> errorResponse = new HashMap<>();
+        errorResponse.put("errors", errors);
+        return errorResponse;
     }
 }
