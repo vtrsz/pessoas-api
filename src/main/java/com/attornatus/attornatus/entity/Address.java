@@ -1,9 +1,15 @@
 package com.attornatus.attornatus.entity;
 
 import jakarta.persistence.*;
+import lombok.*;
 
 @Entity(name = "address")
 @Table(name = "address")
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+@ToString
 public class Address {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
