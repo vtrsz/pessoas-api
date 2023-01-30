@@ -13,7 +13,6 @@ import java.util.List;
 @NoArgsConstructor
 @ToString
 public class ResponsePersonDTO {
-    @NotNull
     @NotNull(message = "id cannot be blank")
     private Long id;
 
