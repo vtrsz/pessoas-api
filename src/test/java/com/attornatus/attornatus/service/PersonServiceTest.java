@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -63,6 +64,20 @@ public class PersonServiceTest {
     }
 
     @Test
+    public void shouldThrowAMultipleMainAddressExceptionWhenCreateAPersonWithMultipleMainAddress() {
+        List<AddressAttachedPersonDTO> addressesDTO = Arrays.asList(
+                new AddressAttachedPersonDTO("Rua da Escola", "1502", "São Paulo", "SP", "00000000", true),
+                new AddressAttachedPersonDTO("Rua da Lagoa", "10", "Recife", "PE", "00000001", true));
+        CreatePersonDTO personDTO = CreatePersonDTO.builder()
+                .name("John Doe")
+                .birthDate(LocalDate.parse("2000-01-01"))
+                .addresses(addressesDTO).build();
+
+        assertThrows(MultipleMainAddressException.class, () -> personService.createPerson(personDTO));
+        verify(personRepository, times(0)).save(any(Person.class));
+    }
+
+    @Test
     public void shouldThrowABusinessRuleExceptionWhenCreateAPersonWithEmptyAddress() {
         CreatePersonDTO personDTO = CreatePersonDTO.builder()
                 .name("John Doe")
@@ -82,5 +97,18 @@ public class PersonServiceTest {
 
         assertThrows(BusinessRuleException.class, () -> personService.createPerson(personDTO));
         verify(personRepository, times(0)).save(any(Person.class));
+    }
+
+    @Test
+    public void shouldGetAPerson() {
+        personService.getPersonById(1L);
+
+        verify(personRepository, times(1)).findById(1L);
+    }
+
+    @Test
+    public void shouldNotFoundWhenGetAPerson() {
+        assertTrue(personService.getPersonById(1L).isEmpty());
+        verify(personRepository, times(1)).findById(1L);
     }
 }
