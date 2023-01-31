@@ -46,4 +46,9 @@ public class PersonController {
     public ResponseEntity<ResponsePersonDTO> getPerson(@PathVariable final Long id) {
         return ResponseEntity.of(personService.getPersonById(id));
     }
+
+    @PutMapping(path = "/{id}", produces = {"application/json"}, consumes = {"application/json"})
+    public ResponseEntity<ResponsePersonDTO> putPerson(@PathVariable final Long id, @Valid @RequestBody CreatePersonDTO createPersonDTO) {
+        return ResponseEntity.of(personService.updatePersonById(createPersonDTO, id));
+    }
 }
