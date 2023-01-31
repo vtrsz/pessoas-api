@@ -50,7 +50,6 @@ public class PersonControllerTest {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             objectMapper.registerModule(new JavaTimeModule());
-            //mapper.configure(SerializationConfig.Feature.DEFAULT_VIEW_INCLUSION, false);
 
             return objectMapper.writerWithView(ResponsePersonDTO.class).writeValueAsString(obj);
         } catch (Exception e) {
