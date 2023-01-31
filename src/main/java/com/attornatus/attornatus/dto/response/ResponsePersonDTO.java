@@ -12,6 +12,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
+@Builder
 public class ResponsePersonDTO {
     @NotNull(message = "id cannot be blank")
     private Long id;
