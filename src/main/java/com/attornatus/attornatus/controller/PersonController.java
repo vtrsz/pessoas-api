@@ -2,7 +2,6 @@ package com.attornatus.attornatus.controller;
 
 import com.attornatus.attornatus.dto.request.CreatePersonDTO;
 import com.attornatus.attornatus.dto.response.ResponsePersonDTO;
-import com.attornatus.attornatus.entity.Person;
 import com.attornatus.attornatus.exception.BusinessRuleException;
 import com.attornatus.attornatus.exception.MultipleMainAddressException;
 import com.attornatus.attornatus.service.PersonService;
@@ -16,10 +15,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Person Controller", description = "Create, Update, Read and Delete")
 @RestController
@@ -37,12 +33,11 @@ public class PersonController {
             @ApiResponse(responseCode = "422", description = "Unprocessable Entity", content = @Content(mediaType = "application/json"))
     })
     public ResponseEntity<ResponsePersonDTO> postPerson(@Valid @RequestBody CreatePersonDTO personDTO) throws MultipleMainAddressException, BusinessRuleException {
-        Person person = personDTO.toEntity();
+        return new ResponseEntity<>(personService.createPerson(personDTO), HttpStatus.CREATED);
+    }
 
-        Person createdPerson = personService.createPerson(person);
-
-        ResponsePersonDTO responsePersonDTO = createdPerson.toDto();
-
-        return new ResponseEntity<>(responsePersonDTO, HttpStatus.CREATED);
+    @GetMapping(path = "/{id}")
+    public ResponseEntity<ResponsePersonDTO> getPerson(@PathVariable final Long id) {
+        return new ResponseEntity<>(personService.getPersonById(id).get(), HttpStatus.OK);
     }
 }

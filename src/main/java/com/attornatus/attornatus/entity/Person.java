@@ -29,6 +29,7 @@ public class Person {
     private LocalDate birthDate;
 
     @OneToMany(mappedBy = "person", cascade = CascadeType.ALL)
+    @ToString.Exclude
     private List<Address> addresses;
 
     public ResponsePersonDTO toDto() {

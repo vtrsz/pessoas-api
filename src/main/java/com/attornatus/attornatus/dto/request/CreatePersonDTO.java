@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 @Getter
 @Setter
 @AllArgsConstructor
+@NoArgsConstructor
 @ToString
 public class CreatePersonDTO {
     @NotBlank(message = "name cannot be blank")
