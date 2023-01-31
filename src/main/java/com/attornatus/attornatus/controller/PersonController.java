@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Person Controller", description = "Create, Update, Read and Delete")
 @RestController
-@RequestMapping(path = "/api/person", produces = {"application/json"}, consumes = {"application/json"})
+@RequestMapping(path = "/api/person", produces = {"application/json"})
 public class PersonController {
     @Autowired
     private PersonService personService;
@@ -28,7 +28,7 @@ public class PersonController {
     @Operation(summary = "Post person",
             description = "Create a person and save to database.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Successfully created", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ResponsePersonDTO.class))),
+            @ApiResponse(responseCode = "201", description = "Successfully Created", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ResponsePersonDTO.class))),
             @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content(mediaType = "application/json")),
             @ApiResponse(responseCode = "422", description = "Unprocessable Entity", content = @Content(mediaType = "application/json"))
     })
@@ -36,8 +36,14 @@ public class PersonController {
         return new ResponseEntity<>(personService.createPerson(personDTO), HttpStatus.CREATED);
     }
 
-    @GetMapping(path = "/{id}")
+    @Operation(summary = "Get person",
+            description = "Get a person information.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Successfully Got", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ResponsePersonDTO.class))),
+            @ApiResponse(responseCode = "404", description = "Not Found", content = @Content(mediaType = "application/json"))
+    })
+    @GetMapping(path = "/{id}", produces = {"application/json"})
     public ResponseEntity<ResponsePersonDTO> getPerson(@PathVariable final Long id) {
-        return new ResponseEntity<>(personService.getPersonById(id).get(), HttpStatus.OK);
+        return ResponseEntity.of(personService.getPersonById(id));
     }
 }

@@ -7,21 +7,26 @@ import com.attornatus.attornatus.entity.Person;
 import com.attornatus.attornatus.exception.BusinessRuleException;
 import com.attornatus.attornatus.exception.MultipleMainAddressException;
 import com.attornatus.attornatus.repository.PersonRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
 @Service
 public class PersonService {
-    @Autowired
-    private PersonRepository personRepository;
+    private final PersonRepository personRepository;
+
+    public PersonService(PersonRepository personRepository) {
+        this.personRepository = personRepository;
+    }
 
     public ResponsePersonDTO createPerson(CreatePersonDTO personDTO) throws MultipleMainAddressException, BusinessRuleException {
-        Person person = personDTO.toEntity();
-        if (person.getAddresses() == null || person.getAddresses().isEmpty()) {
+        if (personDTO == null) {
+            throw new IllegalArgumentException("a person cannot be null");
+        }
+        if (personDTO.getAddresses() == null || personDTO.getAddresses().isEmpty()) {
             throw new BusinessRuleException("a person must have at least one address");
         }
+        Person person = personDTO.toEntity();
         boolean alreadyHasMain = false;
         for (Address address : person.getAddresses()) {
             if (address.getMain()) {
