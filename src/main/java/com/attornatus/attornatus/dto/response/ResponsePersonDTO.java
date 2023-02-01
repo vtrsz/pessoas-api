@@ -1,5 +1,6 @@
 package com.attornatus.attornatus.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -21,6 +22,7 @@ public class ResponsePersonDTO {
     private String name;
 
     @NotNull(message = "birthDate cannot be blank")
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private LocalDate birthDate;
 
     @NotNull(message = "addresses cannot be null")
