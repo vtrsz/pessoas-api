@@ -28,7 +28,7 @@ public class Person {
     @Column(nullable = false)
     private LocalDate birthDate;
 
-    @OneToMany(mappedBy = "person", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "person", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
     private List<Address> addresses;
 
