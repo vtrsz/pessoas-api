@@ -6,6 +6,7 @@ import com.attornatus.attornatus.dto.response.ResponseAddressAttachedPersonDTO;
 import com.attornatus.attornatus.dto.response.ResponsePersonDTO;
 import com.attornatus.attornatus.exception.BusinessRuleException;
 import com.attornatus.attornatus.service.PersonService;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.junit.jupiter.api.Test;
@@ -14,18 +15,20 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -48,15 +51,24 @@ public class PersonControllerTest {
         }
     }
 
-    public static String toJson(final Object obj) {
-        try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            objectMapper.registerModule(new JavaTimeModule());
+    public static String asJsonNodeString(byte[] bytes) throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
 
-            return objectMapper.writerWithView(ResponsePersonDTO.class).writeValueAsString(obj);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        return objectMapper.readTree(bytes).toString();
+    }
+
+    public static String asJsonNodeString(final Object obj) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+        return objectMapper.valueToTree(obj).toString();
+    }
+
+    public static JsonNode asJsonNode(byte[] bytes) throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+
+        return objectMapper.readTree(bytes);
     }
 
     @Test
@@ -78,7 +90,7 @@ public class PersonControllerTest {
 
         given(personService.createPerson(any(CreatePersonDTO.class))).willAnswer((invocation)-> responsePersonDTO);
 
-        mvc.perform(post("/api/person")
+        MvcResult response = mvc.perform(post("/api/person")
                         .content(asJsonString(createPersonDTO))
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
@@ -87,7 +99,10 @@ public class PersonControllerTest {
                 .andExpect(jsonPath("$.id").value(responsePersonDTO.getId()))
                 .andExpect(jsonPath("$.name").value(responsePersonDTO.getName()))
                 .andExpect(jsonPath("$.birthDate").value(responsePersonDTO.getBirthDate().toString()))
-                .andExpect(jsonPath("$.addresses").exists());
+                .andExpect(jsonPath("$.addresses").exists())
+                .andReturn();
+
+        assertEquals(asJsonNode(response.getResponse().getContentAsByteArray()).get("addresses").toString(), asJsonNodeString(responsePersonDTO.getAddresses()));
     }
 
     @Test
@@ -133,8 +148,7 @@ public class PersonControllerTest {
 
         ObjectMapper mapper = new ObjectMapper();
 
-        mvc.perform(MockMvcRequestBuilders
-                        .get("/api/person/50")
+        MvcResult response = mvc.perform(get("/api/person/50")
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andDo(print())
@@ -142,19 +156,52 @@ public class PersonControllerTest {
                 .andExpect(jsonPath("$.id").value(responsePersonDTO.getId()))
                 .andExpect(jsonPath("$.name").value(responsePersonDTO.getName()))
                 .andExpect(jsonPath("$.birthDate").value(responsePersonDTO.getBirthDate().toString()))
-                .andExpect(jsonPath("$.addresses").exists());
+                .andExpect(jsonPath("$.addresses").exists())
+                .andReturn();
+
+        assertEquals(asJsonNode(response.getResponse().getContentAsByteArray()).get("addresses").toString(), asJsonNodeString(responsePersonDTO.getAddresses()));
     }
 
     @Test
     public void shouldReturn404WhenGetPersonById() throws Exception {
         given(personService.getPersonById(50L)).willAnswer((invocation) -> Optional.empty());
 
-        mvc.perform(MockMvcRequestBuilders
-                        .get("/api/person/50")
+        mvc.perform(get("/api/person/50")
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andDo(print())
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void shouldReturn200WhenGetAllPeople() throws Exception {
+        List<ResponseAddressAttachedPersonDTO> firstResponseAddressDTO = List.of(
+                new ResponseAddressAttachedPersonDTO(1L, "Rua da Escola", "1502", "São Paulo", "SP", "00000000", true)
+        );
+        ResponsePersonDTO firstResponsePersonDTO = ResponsePersonDTO.builder()
+                .id(1L).name("John Doe")
+                .birthDate(LocalDate.parse("2000-01-01"))
+                .addresses(firstResponseAddressDTO).build();
+
+        List<ResponseAddressAttachedPersonDTO> secondResponseAddressDTO = List.of(
+                new ResponseAddressAttachedPersonDTO(2L, "Rua da Igreja", "12", "Recife", "PE", "00000000", true)
+        );
+        ResponsePersonDTO secondResponsePersonDTO = ResponsePersonDTO.builder()
+                .id(2L).name("John Doe")
+                .birthDate(LocalDate.parse("2000-01-01"))
+                .addresses(secondResponseAddressDTO).build();
+
+        List<ResponsePersonDTO> responsePersonDTOS = Arrays.asList(firstResponsePersonDTO, secondResponsePersonDTO);
+
+        given(personService.getAllPeople()).willAnswer((invocation) -> responsePersonDTOS);
+
+        MvcResult response = mvc.perform(get("/api/person")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andReturn();
+
+        assertEquals(asJsonNodeString(response.getResponse().getContentAsByteArray()), asJsonNodeString(responsePersonDTOS));
     }
 
     @Test
@@ -176,7 +223,7 @@ public class PersonControllerTest {
 
         given(personService.updatePersonById(any(CreatePersonDTO.class), eq(1L))).willAnswer((invocation)-> Optional.of(responsePersonDTO));
 
-        mvc.perform(put("/api/person/1")
+        MvcResult response = mvc.perform(put("/api/person/1")
                         .content(asJsonString(createPersonDTO))
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
@@ -185,7 +232,10 @@ public class PersonControllerTest {
                 .andExpect(jsonPath("$.id").value(responsePersonDTO.getId()))
                 .andExpect(jsonPath("$.name").value(responsePersonDTO.getName()))
                 .andExpect(jsonPath("$.birthDate").value(responsePersonDTO.getBirthDate().toString()))
-                .andExpect(jsonPath("$.addresses").exists());
+                .andExpect(jsonPath("$.addresses").exists())
+                .andReturn();
+
+        assertEquals(asJsonNode(response.getResponse().getContentAsByteArray()).get("addresses").toString(), asJsonNodeString(responsePersonDTO.getAddresses()));
     }
 
     @Test
