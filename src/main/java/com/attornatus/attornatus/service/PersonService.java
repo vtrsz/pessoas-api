@@ -9,6 +9,9 @@ import com.attornatus.attornatus.exception.MultipleMainAddressException;
 import com.attornatus.attornatus.repository.PersonRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -50,6 +53,19 @@ public class PersonService {
             return Optional.empty();
         }
         return Optional.ofNullable(searchedPerson.get().toDto());
+    }
+
+    public List<ResponsePersonDTO> getAllPeople() {
+        List<Person> people = personRepository.findAllByOrderByIdAsc();
+        if (people.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<ResponsePersonDTO> responsePeople = new ArrayList<>();
+        for (Person person : people) {
+            ResponsePersonDTO personDTO = person.toDto();
+            responsePeople.add(personDTO);
+        }
+        return responsePeople;
     }
 
     public Optional<ResponsePersonDTO> updatePersonById(CreatePersonDTO personDTO, Long id) throws BusinessRuleException, MultipleMainAddressException {
