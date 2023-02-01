@@ -124,6 +124,28 @@ public class PersonServiceTest {
     }
 
     @Test
+    public void shouldGetAllPeople() {
+        Person firstPerson = new Person(1L, "John Doe", LocalDate.parse("2000-01-01"), List.of());
+        firstPerson.setAddresses(List.of(new Address(1L, "Rua da Lagoa", "10", "Recife", "PE", "0000000", true, firstPerson)));
+        Person secondPerson = new Person(1L, "John Doe", LocalDate.parse("2000-01-01"), List.of());
+        secondPerson.setAddresses(List.of(new Address(1L, "Rua da Lagoa", "10", "Recife", "PE", "0000000", true, secondPerson)));
+        List<Person> people = Arrays.asList(firstPerson, secondPerson);
+
+        when(personRepository.findAllByOrderByIdAsc()).thenReturn(people);
+
+        personService.getAllPeople();
+
+        verify(personRepository, times(1)).findAllByOrderByIdAsc();
+    }
+
+    @Test
+    public void shouldNotFoundWhenGetAllPeople() {
+        assertEquals(personService.getAllPeople(), List.of());
+
+        verify(personRepository, times(1)).findAllByOrderByIdAsc();
+    }
+
+    @Test
     public void shouldUpdateAPerson() throws MultipleMainAddressException, BusinessRuleException {
         List<AddressAttachedPersonDTO> addressesDTO = Arrays.asList(
                 new AddressAttachedPersonDTO("Rua da Escola", "1502", "São Paulo", "SP", "00000000", true),
