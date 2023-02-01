@@ -47,8 +47,17 @@ public class PersonController {
         return ResponseEntity.of(personService.getPersonById(id));
     }
 
+
+    @Operation(summary = "Update person",
+            description = "Update a person and save to database.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Successfully Updated", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ResponsePersonDTO.class))),
+            @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "404", description = "Not Found", content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "422", description = "Unprocessable Entity", content = @Content(mediaType = "application/json"))
+    })
     @PutMapping(path = "/{id}", produces = {"application/json"}, consumes = {"application/json"})
-    public ResponseEntity<ResponsePersonDTO> putPerson(@PathVariable final Long id, @Valid @RequestBody CreatePersonDTO createPersonDTO) {
+    public ResponseEntity<ResponsePersonDTO> putPerson(@PathVariable final Long id, @Valid @RequestBody CreatePersonDTO createPersonDTO) throws MultipleMainAddressException, BusinessRuleException {
         return ResponseEntity.of(personService.updatePersonById(createPersonDTO, id));
     }
 }
