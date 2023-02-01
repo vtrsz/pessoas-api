@@ -37,7 +37,7 @@ public class Person {
         BeanUtils.copyProperties(this, personDTO);
 
         List<ResponseAddressAttachedPersonDTO> addresses = this.getAddresses().stream()
-                .map(Address::toDto)
+                .map(Address::toAttachedDto)
                 .collect(Collectors.toList());
 
 
