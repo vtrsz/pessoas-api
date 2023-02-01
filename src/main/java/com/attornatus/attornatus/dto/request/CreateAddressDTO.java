@@ -1,16 +1,16 @@
 package com.attornatus.attornatus.dto.request;
 
+import com.attornatus.attornatus.entity.Address;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
+import org.springframework.beans.BeanUtils;
 
 @Getter
 @Setter
 @AllArgsConstructor
 @ToString
+@Builder
 public class CreateAddressDTO {
     @NotBlank(message = "street cannot be blank")
     private String street;
@@ -32,4 +32,11 @@ public class CreateAddressDTO {
 
     @NotNull(message = "personId cannot be null")
     private Long personId;
+
+    public Address toEntity() {
+        Address address = new Address();
+        BeanUtils.copyProperties(this, address);
+
+        return address;
+    }
 }
