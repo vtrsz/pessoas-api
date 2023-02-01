@@ -18,7 +18,8 @@ import java.util.stream.Collectors;
 @ControllerAdvice
 public class GlobalExceptionHandler {
     @ExceptionHandler({BusinessRuleException.class,
-            MultipleMainAddressException.class
+            MultipleMainAddressException.class,
+            IllegalArgumentException.class
     })
     public @ResponseBody ResponseEntity<Map<String, List<String>>> handleBusinessErrors(Exception e) {
         return new ResponseEntity<>(getErrorsMap(List.of(e.getMessage())), new HttpHeaders(), HttpStatus.UNPROCESSABLE_ENTITY);
