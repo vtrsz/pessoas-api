@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -102,14 +103,10 @@ public class PersonControllerTest {
 
     @Test
     public void shouldReturn422WhenCreateNewPerson() throws Exception {
-        List<AddressAttachedPersonDTO> addressesDTO = Arrays.asList(
-                new AddressAttachedPersonDTO("Rua da Escola", "1502", "São Paulo", "SP", "00000000", true),
-                new AddressAttachedPersonDTO("Rua da Lagoa", "10", "Recife", "PE", "00000000", false)
-        );
         CreatePersonDTO createPersonDTO = CreatePersonDTO.builder()
                 .name("John Doe")
                 .birthDate(LocalDate.parse("2000-01-01"))
-                .addresses(addressesDTO).build();
+                .addresses(List.of()).build();
 
         given(personService.createPerson(any(CreatePersonDTO.class))).willThrow(new BusinessRuleException("a person must have at least one address"));
 
@@ -152,8 +149,6 @@ public class PersonControllerTest {
     public void shouldReturn404WhenGetPersonById() throws Exception {
         given(personService.getPersonById(50L)).willAnswer((invocation) -> Optional.empty());
 
-        ObjectMapper mapper = new ObjectMapper();
-
         mvc.perform(MockMvcRequestBuilders
                         .get("/api/person/50")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -179,7 +174,7 @@ public class PersonControllerTest {
         );
         ResponsePersonDTO responsePersonDTO = new ResponsePersonDTO(1L, "John Doe", LocalDate.parse("2000-01-01"), responseAddresses);
 
-        given(personService.updatePersonById(any(CreatePersonDTO.class), 1L)).willAnswer((invocation)-> responsePersonDTO);
+        given(personService.updatePersonById(any(CreatePersonDTO.class), eq(1L))).willAnswer((invocation)-> Optional.of(responsePersonDTO));
 
         mvc.perform(put("/api/person/1")
                         .content(asJsonString(createPersonDTO))
@@ -191,5 +186,54 @@ public class PersonControllerTest {
                 .andExpect(jsonPath("$.name").value(responsePersonDTO.getName()))
                 .andExpect(jsonPath("$.birthDate").value(responsePersonDTO.getBirthDate().toString()))
                 .andExpect(jsonPath("$.addresses").exists());
+    }
+
+    @Test
+    public void shouldReturn400WhenUpdatePersonById() throws Exception {
+        mvc.perform(put("/api/person/1")
+                        .content(asJsonString(null))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors").exists());
+    }
+
+    @Test
+    public void shouldReturn404WhenUpdatePersonById() throws Exception {
+        List<AddressAttachedPersonDTO> addressesDTO = Arrays.asList(
+                new AddressAttachedPersonDTO("Rua da Escola", "1502", "São Paulo", "SP", "00000000", true),
+                new AddressAttachedPersonDTO("Rua da Lagoa", "10", "Recife", "PE", "00000000", false)
+        );
+        CreatePersonDTO createPersonDTO = CreatePersonDTO.builder()
+                .name("John Doe")
+                .birthDate(LocalDate.parse("2000-01-01"))
+                .addresses(addressesDTO).build();
+
+        mvc.perform(MockMvcRequestBuilders
+                        .put("/api/person/1")
+                        .content(asJsonString(createPersonDTO))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void shouldReturn422WhenUpdatePersonById() throws Exception {
+        CreatePersonDTO createPersonDTO = CreatePersonDTO.builder()
+                .name("John Doe")
+                .birthDate(LocalDate.parse("2000-01-01"))
+                .addresses(List.of()).build();
+
+        given(personService.updatePersonById(any(CreatePersonDTO.class), eq(1L))).willThrow(new BusinessRuleException("a person must have at least one address"));
+
+        mvc.perform(put("/api/person/1")
+                        .content(asJsonString(createPersonDTO))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.errors").exists());
     }
 }
