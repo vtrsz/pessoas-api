@@ -26,7 +26,9 @@ public class PersonService {
         if (personDTO.getAddresses() == null || personDTO.getAddresses().isEmpty()) {
             throw new BusinessRuleException("a person must have at least one address");
         }
+
         Person person = personDTO.toEntity();
+
         boolean alreadyHasMain = false;
         for (Address address : person.getAddresses()) {
             if (address.getMain()) {
@@ -39,8 +41,7 @@ public class PersonService {
         if (!alreadyHasMain) {
             throw new BusinessRuleException("a person need to have a main address");
         }
-        personRepository.save(person);
-        return person.toDto();
+        return personRepository.save(person).toDto();
     }
 
     public Optional<ResponsePersonDTO> getPersonById(final Long id) {
@@ -49,5 +50,38 @@ public class PersonService {
             return Optional.empty();
         }
         return Optional.ofNullable(searchedPerson.get().toDto());
+    }
+
+    public Optional<ResponsePersonDTO> updatePersonById(CreatePersonDTO personDTO, Long id) throws BusinessRuleException, MultipleMainAddressException {
+        Optional<Person> personToUpdate = personRepository.findById(id);
+        if (personToUpdate.isEmpty()) {
+            return Optional.empty();
+        }
+        if (personDTO == null) {
+            throw new IllegalArgumentException("a person cannot be null");
+        }
+        if (personDTO.getAddresses() == null || personDTO.getAddresses().isEmpty()) {
+            throw new BusinessRuleException("a person must have at least one address");
+        }
+
+        Person person = personDTO.toEntity();
+        person.setId(personToUpdate.get().getId());
+
+        boolean alreadyHasMain = false;
+        for (Address address : person.getAddresses()) {
+            if (address.getMain()) {
+                if (alreadyHasMain) {
+                    throw new MultipleMainAddressException("a person cannot have multiple main addresses");
+                }
+                alreadyHasMain = true;
+            }
+        }
+        if (!alreadyHasMain) {
+            throw new BusinessRuleException("a person need to have a main address");
+        }
+
+        personToUpdate = Optional.of(person);
+
+        return Optional.ofNullable(personRepository.save(personToUpdate.get()).toDto());
     }
 }
