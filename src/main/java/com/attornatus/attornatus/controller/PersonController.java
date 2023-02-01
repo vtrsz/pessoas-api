@@ -6,6 +6,7 @@ import com.attornatus.attornatus.exception.BusinessRuleException;
 import com.attornatus.attornatus.exception.MultipleMainAddressException;
 import com.attornatus.attornatus.service.PersonService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -16,6 +17,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Optional;
 
 @Tag(name = "Person Controller", description = "Create, Update, Read and Delete")
 @RestController
@@ -39,12 +43,22 @@ public class PersonController {
     @Operation(summary = "Get person",
             description = "Get a person information.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Successfully Got", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ResponsePersonDTO.class))),
+            @ApiResponse(responseCode = "201", description = "Successfully Got", content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = ResponsePersonDTO.class)))),
             @ApiResponse(responseCode = "404", description = "Not Found", content = @Content(mediaType = "application/json"))
     })
     @GetMapping(path = "/{id}", produces = {"application/json"})
     public ResponseEntity<ResponsePersonDTO> getPerson(@PathVariable final Long id) {
         return ResponseEntity.of(personService.getPersonById(id));
+    }
+
+    @Operation(summary = "Get all people",
+            description = "Get a list of people information.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Successfully Got", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ResponsePersonDTO.class))),
+    })
+    @GetMapping(produces = {"application/json"})
+    public ResponseEntity<List<ResponsePersonDTO>> getPerson() {
+        return ResponseEntity.of(Optional.ofNullable(personService.getAllPeople()));
     }
 
 
