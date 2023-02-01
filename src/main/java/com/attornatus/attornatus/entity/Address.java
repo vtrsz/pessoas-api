@@ -43,6 +43,7 @@ public class Address {
     public ResponseAddressDTO toResponseDto() {
         ResponseAddressDTO address = new ResponseAddressDTO();
         BeanUtils.copyProperties(this, address);
+        address.setPersonId(this.getPerson().getId());
         return address;
     }
 
