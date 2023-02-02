@@ -2,6 +2,7 @@ package com.attornatus.attornatus.controller;
 
 import com.attornatus.attornatus.dto.request.CreateAddressDTO;
 import com.attornatus.attornatus.dto.response.ResponseAddressDTO;
+import com.attornatus.attornatus.dto.response.ResponsePersonDTO;
 import com.attornatus.attornatus.exception.BusinessRuleException;
 import com.attornatus.attornatus.service.AddressService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -14,10 +15,10 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Optional;
 
 @Tag(name = "Address Controller", description = "Create, Update, Read and Delete")
 @RestController
@@ -36,5 +37,16 @@ public class AddressController {
     })
     public ResponseEntity<ResponseAddressDTO> postPerson(@Valid @RequestBody CreateAddressDTO addressDTO) throws BusinessRuleException {
         return new ResponseEntity<>(addressService.createAddress(addressDTO), HttpStatus.CREATED);
+    }
+
+    @Operation(summary = "Get all address from a person",
+            description = "Get a list of all address from a specific person.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully Got", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ResponsePersonDTO.class))),
+            @ApiResponse(responseCode = "404", description = "Not Found", content = @Content(mediaType = "application/json"))
+    })
+    @GetMapping(path = "/{id}", produces = {"application/json"})
+    public ResponseEntity<List<ResponseAddressDTO>> getPerson(@PathVariable Long id) {
+        return ResponseEntity.of(Optional.ofNullable(addressService.getAllAddressFromPersonId(id)));
     }
 }
