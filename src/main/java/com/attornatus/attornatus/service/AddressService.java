@@ -9,6 +9,7 @@ import com.attornatus.attornatus.repository.AddressRepository;
 import com.attornatus.attornatus.repository.PersonRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -49,5 +50,15 @@ public class AddressService {
 
         addNewMainAddress(person.get(), newAddress);
         return addressRepository.save(newAddress).toResponseDto();
+    }
+
+    public List<ResponseAddressDTO> getAllAddressFromPersonId(final Long id) {
+        Optional<Person> person = personRepository.findById(id);
+        if (person.isEmpty()) {
+            return null;
+        }
+        return person.get().getAddresses().stream()
+                .map(Address::toResponseDto)
+                .toList();
     }
 }
