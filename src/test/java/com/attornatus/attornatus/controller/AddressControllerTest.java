@@ -12,9 +12,16 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -36,6 +43,19 @@ public class AddressControllerTest {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static String asJsonNodeString(byte[] bytes) throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+
+        return objectMapper.readTree(bytes).toString();
+    }
+
+    public static String asJsonNodeString(final Object obj) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+        return objectMapper.valueToTree(obj).toString();
     }
 
     @Test
@@ -105,5 +125,48 @@ public class AddressControllerTest {
                 .andDo(print())
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.errors").exists());
+    }
+
+    @Test
+    public void shouldReturn200WhenGetAllAddressFromAPerson() throws Exception {
+        ResponseAddressDTO secondResponseAddressDTO = ResponseAddressDTO.builder().id(1L)
+                .street("Rua da Igreja")
+                .number("12")
+                .city("São Paulo")
+                .state("SP")
+                .cep("00000000")
+                .main(true)
+                .personId(1L).build();
+
+        ResponseAddressDTO firstResponseAddressDTO = ResponseAddressDTO.builder().id(2L)
+                .street("Rua da Flor")
+                .number("344")
+                .city("Recife")
+                .state("PE")
+                .cep("11111111")
+                .main(false)
+                .personId(1L).build();
+
+        List<ResponseAddressDTO> responseAddresses = Arrays.asList(firstResponseAddressDTO, secondResponseAddressDTO);
+
+        given(addressService.getAllAddressFromPersonId(1L)).willAnswer((invocation) -> responseAddresses);
+
+        MvcResult response = mvc.perform(get("/api/address/1")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andReturn();
+
+        assertEquals(asJsonNodeString(response.getResponse().getContentAsByteArray()), asJsonNodeString(responseAddresses));
+    }
+
+    @Test
+    public void shouldReturn404WhenGetAllAddressFromAPerson() throws Exception {
+        given(addressService.getAllAddressFromPersonId(0L)).willAnswer((invocation) -> null);
+
+        mvc.perform(get("/api/address/0")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isNotFound());
     }
 }
