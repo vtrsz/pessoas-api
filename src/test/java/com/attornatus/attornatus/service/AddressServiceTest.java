@@ -1,6 +1,7 @@
 package com.attornatus.attornatus.service;
 
 import com.attornatus.attornatus.dto.request.CreateAddressDTO;
+import com.attornatus.attornatus.dto.response.ResponseAddressDTO;
 import com.attornatus.attornatus.entity.Address;
 import com.attornatus.attornatus.entity.Person;
 import com.attornatus.attornatus.exception.BusinessRuleException;
@@ -15,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -101,5 +103,42 @@ public class AddressServiceTest {
 
         assertThrows(BusinessRuleException.class, () -> addressService.createAddress(createAddressDTO));
         verify(addressRepository, times(0)).save(any(Address.class));
+    }
+
+    @Test
+    public void shouldGetAllAddressFromAPerson() {
+        Address address = new Address(1L, "Rua da Igreja", "12", "São Paulo", "SP", "00000000", true, new Person());
+        Person person = new Person(1L, "John Doe", LocalDate.parse("2000-01-01"), new ArrayList<>());
+
+        List<Address> addresses = new ArrayList<>();
+        addresses.add(address);
+        person.setAddresses(addresses);
+        address.setPerson(person);
+
+        ResponseAddressDTO responseAddressDTO = ResponseAddressDTO.builder().id(1L)
+                .street("Rua da Igreja")
+                .number("12")
+                .city("São Paulo")
+                .state("SP")
+                .cep("00000000")
+                .main(true)
+                .personId(1L).build();
+        List<ResponseAddressDTO> responseAddresses = new ArrayList<>();
+        responseAddresses.add(responseAddressDTO);
+
+        when(personRepository.findById(1L)).thenReturn(Optional.of(person));
+
+        assertEquals(responseAddresses.toString(), addressService.getAllAddressFromPersonId(1L).toString());
+
+        verify(personRepository, times(1)).findById(1L);
+    }
+
+    @Test
+    public void shouldReturnNullWhenGetAllAddressFromANotFoundPerson() {
+        when(personRepository.findById(0L)).thenReturn(Optional.empty());
+
+        assertEquals(null, addressService.getAllAddressFromPersonId(0L));
+
+        verify(personRepository, times(1)).findById(0L);
     }
 }
