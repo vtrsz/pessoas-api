@@ -54,7 +54,7 @@ public class PersonController {
     @Operation(summary = "Get all people",
             description = "Get a list of people information.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Successfully Got", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ResponsePersonDTO.class))),
+            @ApiResponse(responseCode = "200", description = "Successfully Got", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ResponsePersonDTO.class))),
     })
     @GetMapping(produces = {"application/json"})
     public ResponseEntity<List<ResponsePersonDTO>> getPerson() {
